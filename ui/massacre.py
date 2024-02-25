@@ -117,10 +117,16 @@ class MassacreUI:
         self.frame: Optional[tk.Frame] = None
         self.data: Optional[MassacreMissionData] = None
         self.settings: GridUiSettings = GridUiSettings(configuration)
-        settings_ui.configuration_listeners.append(self.rebuild_settings)
 
-    def rebuild_settings(self, config: Configuration):
-        self.settings = GridUiSettings(config)
+        settings_ui.configuration_listeners.append(self.notify_settings_changed)
+        massacre_mission_listeners.append(self.notify_mission_state_changed)
+        
+    def notify_mission_state_changed(self, data: Optional[dict[int, MassacreMissionData]]):
+        self.data = MassacreMissionData(data)
+        self.update_ui()
+
+    def notify_settings_changed(self):
+        self.settings = GridUiSettings(configuration)
         self.update_ui()
 
     def set_frame(self, parent: ttk.Notebook):
@@ -139,14 +145,6 @@ class MassacreUI:
         self.update_ui()
         
         return self.frame
-
-    def notify_mission_state_changed(self, data: Optional[MassacreMissionData]):
-        self.data = data
-        self.update_ui()
-
-    def notify_settings_changed(self):
-        self.settings: GridUiSettings = GridUiSettings(configuration)
-        self.update_ui()
 
     def update_ui(self):
         if self.frame is None:
@@ -269,9 +267,3 @@ class MassacreUI:
         self.row_count += 1
         
 massacre_ui = MassacreUI()
-
-def handle_mission_state_changed(data: dict[int, MassacreMission]):
-    data_view = MassacreMissionData(data)
-    massacre_ui.notify_mission_state_changed(data_view)
-
-massacre_mission_listeners.append(handle_mission_state_changed)

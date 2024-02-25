@@ -103,10 +103,16 @@ class CollectUI:
         self.frame: Optional[tk.Frame] = None
         self.data: Optional[CollectMissionData] = None
         self.settings: GridUiSettings = GridUiSettings(configuration)
-        settings_ui.configuration_listeners.append(self.rebuild_settings)
 
-    def rebuild_settings(self, config: Configuration):
-        self.settings = GridUiSettings(config)
+        settings_ui.configuration_listeners.append(self.notify_settings_changed)
+        collect_mission_listeners.append(self.notify_mission_state_changed)
+        
+    def notify_mission_state_changed(self, data: Optional[dict[int, CollectMissionData]]):
+        self.data = CollectMissionData(data)
+        self.update_ui()
+
+    def notify_settings_changed(self):
+        self.settings = GridUiSettings(configuration)
         self.update_ui()
 
     def set_frame(self, parent: ttk.Notebook):
@@ -125,14 +131,6 @@ class CollectUI:
         self.update_ui()
         
         return self.frame
-
-    def notify_mission_state_changed(self, data: Optional[CollectMissionData]):
-        self.data = data
-        self.update_ui()
-
-    def notify_settings_changed(self):
-        self.settings: GridUiSettings = GridUiSettings(configuration)
-        self.update_ui()
 
     def update_ui(self):
         if self.frame is None:
@@ -254,9 +252,3 @@ class CollectUI:
         self.row_count += 1
         
 collect_ui = CollectUI()
-
-def handle_mission_state_changed(data: dict[int, CollectMission]):
-    data_view = CollectMissionData(data)
-    collect_ui.notify_mission_state_changed(data_view)
-
-collect_mission_listeners.append(handle_mission_state_changed)

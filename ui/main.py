@@ -40,6 +40,11 @@ class MainUI:
         self.massacre_tab = Optional[tk.Frame]
         self.mining_tab = Optional[tk.Frame]
         
+        self.display_missions_collect = False
+        self.display_missions_courier = False
+        self.display_missions_massacre = False
+        self.display_missions_mining = False
+    
     def rebuild_settings(self, config: Configuration):
         self.settings = GridUiSettings(config)
         self.update_ui()
@@ -67,9 +72,16 @@ class MainUI:
             if child.widgetName != "ttk::notebook": # don't destroy the tabs
                 child.destroy()
 
-        if self.no_collect_missions_data and self.no_courier_missions_data and \
-           self.no_massacre_missions_data and self.no_mining_missions_data:
-            self.display_no_missions_data()
+        if self.display_missions_collect:
+            self.tabstrip.select(self.collect_tab)
+        elif self.display_missions_courier:
+            self.tabstrip.select(self.courier_tab)
+        elif self.display_missions_massacre:
+            self.tabstrip.select(self.massacre_tab)
+        elif self.display_missions_mining:
+            self.tabstrip.select(self.mining_tab)
+        else:
+            self.display_no_missions_data()            
             
         if self.version_info and self.version_info.status.lower() in ["outdated","unknown"]:
             self.display_version_info()
@@ -78,16 +90,16 @@ class MainUI:
 
     def set_tabs(self):
         self.tabstrip = ttk.Notebook(self.frame)
-        if configuration.display_missions_collect:
+        if self.settings.display_missions_collect:
             self.collect_tab = collect_ui.set_frame(self.tabstrip)  
             self.tabstrip.add(self.collect_tab, text="Collect [0]")
-        if configuration.display_missions_courier:
+        if self.settings.display_missions_courier:
             self.courier_tab = courier_ui.set_frame(self.tabstrip)      
             self.tabstrip.add(self.courier_tab, text="Courier [0]")
-        if configuration.display_missions_massacre:
+        if self.settings.display_missions_massacre:
             self.massacre_tab = massacre_ui.set_frame(self.tabstrip)    
             self.tabstrip.add(self.massacre_tab, text="Massacre [0]")            
-        if configuration.display_missions_mining:
+        if self.settings.display_missions_mining:
             self.mining_tab = mining_ui.set_frame(self.tabstrip)    
             self.tabstrip.add(self.mining_tab, text="Mining [0]")
 
@@ -133,53 +145,37 @@ class MainUI:
         self.version_info.status = "Ignored"
         self.update_ui()
         
-    def notify_collect_mission_state_changed(self, data):
-        if data is not None and len(data) > 0:
-            self.no_collect_missions_data = False            
-            self.update_ui()
-            self.tabstrip.select(self.collect_tab)
+    def notify_collect_mission_state_changed(self, data: dict[int, CollectMission]):
+        if data is None or len(data) == 0:
+            self.display_missions_collect = False
         else:
-            self.no_collect_missions_data = True
+            self.display_missions_collect = True
+        self.update_ui()
             
-    def notify_courier_mission_state_changed(self, data):
-        if data is not None and len(data) > 0:
-            self.no_courier_missions_data = False            
-            self.update_ui()
-            self.tabstrip.select(self.courier_tab)
+    def notify_courier_mission_state_changed(self, data: dict[int, CourierMission]):
+        if data is None or len(data) == 0:
+            self.display_missions_courier = False
         else:
-            self.no_courier_missions_data = True
+            self.display_missions_courier = True
+        self.update_ui()
             
-    def notify_massacre_mission_state_changed(self, data):
-        if data is not None and len(data) > 0:
-            self.no_massacre_missions_data = False            
-            self.update_ui()
-            self.tabstrip.select(self.massacre_tab)
+    def notify_massacre_mission_state_changed(self, data: dict[int, MassacreMission]):
+        if data is None or len(data) == 0:
+            self.display_missions_massacre = False
         else:
-            self.no_massacre_missions_data = True
+            self.display_missions_massacre = True
+        self.update_ui()
             
-    def notify_mining_mission_state_changed(self, data):
-        if data is not None and len(data) > 0:
-            self.no_mining_missions_data = False
-            self.update_ui()
-            self.tabstrip.select(self.mining_tab)
+    def notify_mining_mission_state_changed(self, data: dict[int, MiningMission]):
+        if data is None or len(data) == 0:
+            self.display_missions_mining = False
         else:
-            self.no_mining_missions_data = True
-            
+            self.display_missions_mining = True
+        self.update_ui()
+        
 main_ui = MainUI()
-
-def handle_collect_mission_state_changed(data: dict[int, CollectMission]):
-    main_ui.notify_collect_mission_state_changed(data)
-
-def handle_courier_mission_state_changed(data: dict[int, CourierMission]):
-    main_ui.notify_courier_mission_state_changed(data)
     
-def handle_massacre_mission_state_changed(data: dict[int, MassacreMission]):
-    main_ui.notify_massacre_mission_state_changed(data)
-
-def handle_mining_mission_state_changed(data: dict[int, MiningMission]):
-    main_ui.notify_mining_mission_state_changed(data)
-    
-collect_mission_listeners.append(handle_collect_mission_state_changed)
-courier_mission_listeners.append(handle_courier_mission_state_changed)
-massacre_mission_listeners.append(handle_massacre_mission_state_changed)
-mining_mission_listeners.append(handle_mining_mission_state_changed)
+collect_mission_listeners.append(main_ui.notify_collect_mission_state_changed)
+courier_mission_listeners.append(main_ui.notify_courier_mission_state_changed)
+massacre_mission_listeners.append(main_ui.notify_massacre_mission_state_changed)
+mining_mission_listeners.append(main_ui.notify_mining_mission_state_changed)

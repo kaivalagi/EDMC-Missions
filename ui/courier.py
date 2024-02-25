@@ -101,10 +101,16 @@ class CourierUI:
         self.frame: Optional[tk.Frame] = None
         self.data: Optional[CourierMissionData] = None
         self.settings: GridUiSettings = GridUiSettings(configuration)
-        settings_ui.configuration_listeners.append(self.rebuild_settings)
 
-    def rebuild_settings(self, config: Configuration):
-        self.settings = GridUiSettings(config)
+        settings_ui.configuration_listeners.append(self.notify_settings_changed)
+        courier_mission_listeners.append(self.notify_mission_state_changed)
+        
+    def notify_mission_state_changed(self, data: Optional[dict[int, CourierMissionData]]):
+        self.data = CourierMissionData(data)
+        self.update_ui()
+
+    def notify_settings_changed(self):
+        self.settings = GridUiSettings(configuration)
         self.update_ui()
 
     def set_frame(self, parent: ttk.Notebook):
@@ -123,14 +129,6 @@ class CourierUI:
         self.update_ui()
 
         return self.frame
-
-    def notify_mission_state_changed(self, data: Optional[CourierMissionData]):
-        self.data = data
-        self.update_ui()
-
-    def notify_settings_changed(self):
-        self.settings: GridUiSettings = GridUiSettings(configuration)
-        self.update_ui()
 
     def update_ui(self):
         if self.frame is None:
@@ -253,9 +251,3 @@ class CourierUI:
         self.row_count += 1
         
 courier_ui = CourierUI()
-
-def handle_mission_state_changed(data: dict[int, CourierMission]):
-    data_view = CourierMissionData(data)
-    courier_ui.notify_mission_state_changed(data_view)
-
-courier_mission_listeners.append(handle_mission_state_changed)

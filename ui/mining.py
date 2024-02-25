@@ -102,13 +102,19 @@ class MiningUI:
         self.tabstrip: Optional[ttk.Notebook] = None
         self.frame: Optional[tk.Frame] = None
         self.data: Optional[MiningMissionData] = None        
-        self.settings: GridUiSettings = GridUiSettings(configuration)        
-        settings_ui.configuration_listeners.append(self.rebuild_settings)
+        self.settings: GridUiSettings = GridUiSettings(configuration)
         
-    def rebuild_settings(self, config: Configuration):
-        self.settings = GridUiSettings(config)
+        settings_ui.configuration_listeners.append(self.notify_settings_changed)
+        mining_mission_listeners.append(self.notify_mission_state_changed)
+        
+    def notify_mission_state_changed(self, data: Optional[dict[int, MiningMissionData]]):
+        self.data = MiningMissionData(data)
         self.update_ui()
 
+    def notify_settings_changed(self):
+        self.settings = GridUiSettings(configuration)
+        self.update_ui()
+        
     def set_frame(self, parent: ttk.Notebook):
         # New EDMC Update seems to break frame.grid_size. It returned 0 for EDMC-PVPBot (where I reused the code from here)
         # So it will probably also return 0 here. Someone on the latest version should maybe check it.
@@ -125,15 +131,7 @@ class MiningUI:
         self.update_ui()
         
         return self.frame
-
-    def notify_mission_state_changed(self, data: Optional[MiningMissionData]):
-        self.data = data
-        self.update_ui()
-
-    def notify_settings_changed(self):
-        self.settings: GridUiSettings = GridUiSettings(configuration)
-        self.update_ui()
-
+        
     def update_ui(self):
         if self.frame is None:
             logger.warning("Frame was not yet set. UI was not updated.")
@@ -254,9 +252,3 @@ class MiningUI:
         self.row_count += 1
         
 mining_ui = MiningUI()
-
-def handle_mission_state_changed(data: dict[int, MiningMission]):
-    data_view = MiningMissionData(data)
-    mining_ui.notify_mission_state_changed(data_view)
-
-mining_mission_listeners.append(handle_mission_state_changed)
