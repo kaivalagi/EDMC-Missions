@@ -101,7 +101,8 @@ class MiningUI:
     def __init__(self):
         self.tabstrip: Optional[ttk.Notebook] = None
         self.frame: Optional[tk.Frame] = None
-        self.data: Optional[MiningMissionData] = None
+        self.data: Optional[MiningMissionData] = None        
+        self.settings: GridUiSettings = GridUiSettings(configuration)        
         settings_ui.configuration_listeners.append(self.rebuild_settings)
         
     def rebuild_settings(self, config: Configuration):
@@ -145,7 +146,7 @@ class MiningUI:
 
         self.row_count = 0
       
-        if self.data is not None:
+        if self.data is not None and self.data.mission_count > 0:
             self.display_data()
 
         theme.update(self.frame)

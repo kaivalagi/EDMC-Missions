@@ -2,9 +2,10 @@ import tkinter as tk
 from tkinter import ttk
 from typing import Optional
 
+from missions.state import CollectMission, CourierMission, MassacreMission, MiningMission, collect_mission_listeners, courier_mission_listeners, massacre_mission_listeners, mining_mission_listeners
 from ui.massacre import massacre_ui
 from ui.mining import mining_ui
-from ui.collect import collect_ui
+from ui.collect import CollectMissionData, collect_ui
 from ui.courier import courier_ui
 
 from ui.settings import Configuration, configuration, settings_ui
@@ -26,9 +27,18 @@ class MainUI:
     def __init__(self):
         self.frame: Optional[tk.Frame] = None
         self.version_info: Optional[VersionInfo] = None
-        self.no_missions_data = True
+        self.no_collect_missions_data = True
+        self.no_courier_missions_data = True
+        self.no_massacre_missions_data = True
+        self.no_mining_missions_data = True
         self.settings: GridUiSettings = GridUiSettings(configuration)
         settings_ui.configuration_listeners.append(self.rebuild_settings)
+        
+        self.tabstrip = Optional[ttk.Notebook]
+        self.collect_tab = Optional[tk.Frame]
+        self.courier_tab = Optional[tk.Frame]
+        self.massacre_tab = Optional[tk.Frame]
+        self.mining_tab = Optional[tk.Frame]
         
     def rebuild_settings(self, config: Configuration):
         self.settings = GridUiSettings(config)
@@ -57,7 +67,8 @@ class MainUI:
             if child.widgetName != "ttk::notebook": # don't destroy the tabs
                 child.destroy()
 
-        if self.no_missions_data:
+        if self.no_collect_missions_data and self.no_courier_missions_data and \
+           self.no_massacre_missions_data and self.no_mining_missions_data:
             self.display_no_missions_data()
             
         if self.version_info and self.version_info.status.lower() in ["outdated","unknown"]:
@@ -66,21 +77,21 @@ class MainUI:
         theme.update(self.frame)
 
     def set_tabs(self):
-        tabstrip = ttk.Notebook(self.frame)
+        self.tabstrip = ttk.Notebook(self.frame)
         if configuration.display_missions_collect:
-            collect_tab = collect_ui.set_frame(tabstrip)  
-            tabstrip.add(collect_tab, text="Collect [0]")
+            self.collect_tab = collect_ui.set_frame(self.tabstrip)  
+            self.tabstrip.add(self.collect_tab, text="Collect [0]")
         if configuration.display_missions_courier:
-            courier_tab = courier_ui.set_frame(tabstrip)      
-            tabstrip.add(courier_tab, text="Courier [0]")
+            self.courier_tab = courier_ui.set_frame(self.tabstrip)      
+            self.tabstrip.add(self.courier_tab, text="Courier [0]")
         if configuration.display_missions_massacre:
-            massacre_tab = massacre_ui.set_frame(tabstrip)    
-            tabstrip.add(massacre_tab, text="Massacre [0]")            
+            self.massacre_tab = massacre_ui.set_frame(self.tabstrip)    
+            self.tabstrip.add(self.massacre_tab, text="Massacre [0]")            
         if configuration.display_missions_mining:
-            mining_tab = mining_ui.set_frame(tabstrip)    
-            tabstrip.add(mining_tab, text="Mining [0]")
+            self.mining_tab = mining_ui.set_frame(self.tabstrip)    
+            self.tabstrip.add(self.mining_tab, text="Mining [0]")
 
-        tabstrip.pack(expand=True, fill="both") 
+        self.tabstrip.pack(expand=True, fill="both") 
         
     def display_no_missions_data(self):
         no_data_frame = tk.Frame(self.frame)     
@@ -122,9 +133,53 @@ class MainUI:
         self.version_info.status = "Ignored"
         self.update_ui()
         
-    def notify_mission_state_changed(self, data):
-        if data is not None:
-            self.no_missions_data = False
+    def notify_collect_mission_state_changed(self, data):
+        if data is not None and len(data) > 0:
+            self.no_collect_missions_data = False            
             self.update_ui()
-        
+            self.tabstrip.select(self.collect_tab)
+        else:
+            self.no_collect_missions_data = True
+            
+    def notify_courier_mission_state_changed(self, data):
+        if data is not None and len(data) > 0:
+            self.no_courier_missions_data = False            
+            self.update_ui()
+            self.tabstrip.select(self.courier_tab)
+        else:
+            self.no_courier_missions_data = True
+            
+    def notify_massacre_mission_state_changed(self, data):
+        if data is not None and len(data) > 0:
+            self.no_massacre_missions_data = False            
+            self.update_ui()
+            self.tabstrip.select(self.massacre_tab)
+        else:
+            self.no_massacre_missions_data = True
+            
+    def notify_mining_mission_state_changed(self, data):
+        if data is not None and len(data) > 0:
+            self.no_mining_missions_data = False
+            self.update_ui()
+            self.tabstrip.select(self.mining_tab)
+        else:
+            self.no_mining_missions_data = True
+            
 main_ui = MainUI()
+
+def handle_collect_mission_state_changed(data: dict[int, CollectMission]):
+    main_ui.notify_collect_mission_state_changed(data)
+
+def handle_courier_mission_state_changed(data: dict[int, CourierMission]):
+    main_ui.notify_courier_mission_state_changed(data)
+    
+def handle_massacre_mission_state_changed(data: dict[int, MassacreMission]):
+    main_ui.notify_massacre_mission_state_changed(data)
+
+def handle_mining_mission_state_changed(data: dict[int, MiningMission]):
+    main_ui.notify_mining_mission_state_changed(data)
+    
+collect_mission_listeners.append(handle_collect_mission_state_changed)
+courier_mission_listeners.append(handle_courier_mission_state_changed)
+massacre_mission_listeners.append(handle_massacre_mission_state_changed)
+mining_mission_listeners.append(handle_mining_mission_state_changed)

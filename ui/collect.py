@@ -146,7 +146,7 @@ class CollectUI:
 
         self.row_count = 0
       
-        if self.data is not None:
+        if self.data is not None and self.data.mission_count > 0:
             self.display_data()
 
         theme.update(self.frame)

@@ -276,20 +276,16 @@ def __handle_new_missions_state(data: dict[int, dict]):
         else:
             save_unknown_mission_type_json(mission)
 
-    if len(_massacre_mission_store) > 0:
-        for listener in massacre_mission_listeners:
-            listener(_massacre_mission_store)
+    for listener in massacre_mission_listeners:
+        listener(_massacre_mission_store)
 
-    if len(_mining_mission_store) > 0:
-        for listener in mining_mission_listeners:
-            listener(_mining_mission_store)
+    for listener in mining_mission_listeners:
+        listener(_mining_mission_store)
 
-    if len(_collect_mission_store) > 0:
-        for listener in collect_mission_listeners:
-            listener(_collect_mission_store)
+    for listener in collect_mission_listeners:
+        listener(_collect_mission_store)
 
-    if len(_courier_mission_store) > 0:
-        for listener in courier_mission_listeners:
-            listener(_courier_mission_store)
+    for listener in courier_mission_listeners:
+        listener(_courier_mission_store)
         
 missions.repository.active_missions_changed_event_listeners.append(__handle_new_missions_state)
