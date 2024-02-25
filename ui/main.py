@@ -26,27 +26,64 @@ class GridUiSettings:
 class MainUI:
     def __init__(self):
         self.frame: Optional[tk.Frame] = None
-        self.version_info: Optional[VersionInfo] = None
-        self.no_collect_missions_data = True
-        self.no_courier_missions_data = True
-        self.no_massacre_missions_data = True
-        self.no_mining_missions_data = True
-        self.settings: GridUiSettings = GridUiSettings(configuration)
-        settings_ui.configuration_listeners.append(self.rebuild_settings)
-        
         self.tabstrip = Optional[ttk.Notebook]
         self.collect_tab = Optional[tk.Frame]
         self.courier_tab = Optional[tk.Frame]
         self.massacre_tab = Optional[tk.Frame]
         self.mining_tab = Optional[tk.Frame]
         
+        self.version_info: Optional[VersionInfo] = None
+        self.settings: GridUiSettings = GridUiSettings(configuration)
+        
         self.display_missions_collect = False
         self.display_missions_courier = False
         self.display_missions_massacre = False
         self.display_missions_mining = False
-    
-    def rebuild_settings(self, config: Configuration):
+        
+        settings_ui.configuration_listeners.append(self.notify_settings_changed)
+        collect_mission_listeners.append(self.notify_collect_mission_state_changed)
+        courier_mission_listeners.append(self.notify_courier_mission_state_changed)
+        massacre_mission_listeners.append(self.notify_massacre_mission_state_changed)
+        mining_mission_listeners.append(self.notify_mining_mission_state_changed)
+
+    def notify_settings_changed(self, config: Configuration):
         self.settings = GridUiSettings(config)
+        self.update_ui()
+        
+    def notify_version_info(self, version_info):
+        self.version_info = version_info
+        self.frame.event_generate("<<Refresh>>") # type: ignore
+
+    def notify_version_info_ignored(self):
+        self.version_info.status = "Ignored"
+        self.update_ui()
+        
+    def notify_collect_mission_state_changed(self, data: dict[int, CollectMission]):
+        if data is None or len(data) == 0:
+            self.display_missions_collect = False
+        else:
+            self.display_missions_collect = True
+        self.update_ui()
+            
+    def notify_courier_mission_state_changed(self, data: dict[int, CourierMission]):
+        if data is None or len(data) == 0:
+            self.display_missions_courier = False
+        else:
+            self.display_missions_courier = True
+        self.update_ui()
+            
+    def notify_massacre_mission_state_changed(self, data: dict[int, MassacreMission]):
+        if data is None or len(data) == 0:
+            self.display_missions_massacre = False
+        else:
+            self.display_missions_massacre = True
+        self.update_ui()
+            
+    def notify_mining_mission_state_changed(self, data: dict[int, MiningMission]):
+        if data is None or len(data) == 0:
+            self.display_missions_mining = False
+        else:
+            self.display_missions_mining = True
         self.update_ui()
         
     def set_frame(self, parent: ttk.Frame):
@@ -137,45 +174,5 @@ class MainUI:
         version_info_frame.pack()
         theme.update(version_info_frame)
 
-    def notify_version_info(self, version_info):
-        self.version_info = version_info
-        self.frame.event_generate("<<Refresh>>") # type: ignore
-
-    def notify_version_info_ignored(self):
-        self.version_info.status = "Ignored"
-        self.update_ui()
-        
-    def notify_collect_mission_state_changed(self, data: dict[int, CollectMission]):
-        if data is None or len(data) == 0:
-            self.display_missions_collect = False
-        else:
-            self.display_missions_collect = True
-        self.update_ui()
-            
-    def notify_courier_mission_state_changed(self, data: dict[int, CourierMission]):
-        if data is None or len(data) == 0:
-            self.display_missions_courier = False
-        else:
-            self.display_missions_courier = True
-        self.update_ui()
-            
-    def notify_massacre_mission_state_changed(self, data: dict[int, MassacreMission]):
-        if data is None or len(data) == 0:
-            self.display_missions_massacre = False
-        else:
-            self.display_missions_massacre = True
-        self.update_ui()
-            
-    def notify_mining_mission_state_changed(self, data: dict[int, MiningMission]):
-        if data is None or len(data) == 0:
-            self.display_missions_mining = False
-        else:
-            self.display_missions_mining = True
-        self.update_ui()
         
 main_ui = MainUI()
-    
-collect_mission_listeners.append(main_ui.notify_collect_mission_state_changed)
-courier_mission_listeners.append(main_ui.notify_courier_mission_state_changed)
-massacre_mission_listeners.append(main_ui.notify_massacre_mission_state_changed)
-mining_mission_listeners.append(main_ui.notify_mining_mission_state_changed)
