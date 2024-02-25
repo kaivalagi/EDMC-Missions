@@ -12,14 +12,16 @@ from helpers.logger_factory import logger
 from theme import theme
 from helpers.version_check import open_download_page, VersionInfo
 
-from missions.state import mining_mission_listeners, MiningMission
-
 class GridUiSettings:
     def __init__(self, config: Configuration):
-        self.display_total = config.display_total
-        self.display_stats = config.display_stats
-        self.debug_mode = config.debug_mode
-        
+        self.display_missions_collect = config.display_missions_collect
+        self.display_missions_courier = config.display_missions_courier
+        self.display_missions_massacre = config.display_missions_massacre
+        self.display_missions_mining = config.display_missions_mining
+        self.display_row_total = config.display_row_total
+        self.display_row_stats = config.display_row_stats
+        self.debug_mode_enabled = config.debug_mode_enabled
+
 class MainUI:
     def __init__(self):
         self.frame: Optional[tk.Frame] = None
@@ -64,15 +66,20 @@ class MainUI:
         theme.update(self.frame)
 
     def set_tabs(self):
-        tabstrip = ttk.Notebook(self.frame)    
-        mining_tab = mining_ui.set_frame(tabstrip)    
-        tabstrip.add(mining_tab, text="Mining [0]")
-        collect_tab = collect_ui.set_frame(tabstrip)  
-        tabstrip.add(collect_tab, text="Collect [0]")
-        massacre_tab = massacre_ui.set_frame(tabstrip)    
-        tabstrip.add(massacre_tab, text="Massacre [0]")
-        courier_tab = courier_ui.set_frame(tabstrip)      
-        tabstrip.add(courier_tab, text="Courier [0]")
+        tabstrip = ttk.Notebook(self.frame)
+        if configuration.display_missions_collect:
+            collect_tab = collect_ui.set_frame(tabstrip)  
+            tabstrip.add(collect_tab, text="Collect [0]")
+        if configuration.display_missions_courier:
+            courier_tab = courier_ui.set_frame(tabstrip)      
+            tabstrip.add(courier_tab, text="Courier [0]")
+        if configuration.display_missions_massacre:
+            massacre_tab = massacre_ui.set_frame(tabstrip)    
+            tabstrip.add(massacre_tab, text="Massacre [0]")            
+        if configuration.display_missions_mining:
+            mining_tab = mining_ui.set_frame(tabstrip)    
+            tabstrip.add(mining_tab, text="Mining [0]")
+
         tabstrip.pack(expand=True, fill="both") 
         
     def display_no_missions_data(self):
@@ -121,8 +128,3 @@ class MainUI:
             self.update_ui()
         
 main_ui = MainUI()
-
-def handle_mission_state_changed(data: any):
-    main_ui.notify_mission_state_changed(data)
-
-mining_mission_listeners.append(handle_mission_state_changed)

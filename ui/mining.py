@@ -93,18 +93,17 @@ class GridUiSettings:
     """
     def __init__(self, config: Configuration):
         self.column_count = 4
-        self.display_total = config.display_total
-        self.display_stats = config.display_stats
-        self.debug_mode = config.debug_mode
-
+        self.display_row_total = config.display_row_total
+        self.display_row_stats = config.display_row_stats
+        self.debug_mode_enabled = config.debug_mode_enabled
+        
 class MiningUI:
     def __init__(self):
-        self.tabstrip: Optional[tk.Notebook] = None
+        self.tabstrip: Optional[ttk.Notebook] = None
         self.frame: Optional[tk.Frame] = None
         self.data: Optional[MiningMissionData] = None
-        self.settings: GridUiSettings = GridUiSettings(configuration)
         settings_ui.configuration_listeners.append(self.rebuild_settings)
-
+        
     def rebuild_settings(self, config: Configuration):
         self.settings = GridUiSettings(config)
         self.update_ui()
@@ -155,16 +154,16 @@ class MiningUI:
         self.tabstrip.tab(self.frame, text=f"Mining [{self.data.mission_count}]")    
         self.display_header()
         for commodity in sorted(self.data.commodities.keys()):
-            self.display_row(commodity)
+            self.display_row_data(commodity)
 
-        if self.settings.display_total:
-            self.display_total()
+        if self.settings.display_row_total:
+            self.display_row_total()
 
-        if self.settings.display_stats:
-            self.display_stats()
+        if self.settings.display_row_stats:
+            self.display_row_stats()
 
         for warning in self.data.warnings:
-            self.display_warning(warning)        
+            self.display_row_warning(warning)        
     
     def display_header(self):
 
@@ -184,7 +183,7 @@ class MiningUI:
         
         self.settings.column_count = len(ui_elements)
 
-    def display_row(self, commodity: str):
+    def display_row_data(self, commodity: str):
 
         commodity_data = self.data.commodities[commodity]
 
@@ -208,7 +207,7 @@ class MiningUI:
         # lines = [f"commodity:{commodity},count:{self.data.delivered_count}/{self.data.required_count}"]
         # overlay.send_lines("mining", lines)
 
-    def display_total(self):
+    def display_row_total(self):
         label = tk.Label(self.frame, text="Total")
         required_total = tk.Label(self.frame, text=self.data.required_count)
         mission_total = tk.Label(self.frame, text=self.data.mission_count)
@@ -229,7 +228,7 @@ class MiningUI:
         pb["value"] = (float(self.data.delivered_count)/float(self.data.required_count))*100
         self.row_count += 1
 
-    def display_stats(self):
+    def display_row_stats(self):
         min_expiry_text = get_expiry_text(self.data.min_expiry)
         max_expiry_text = get_expiry_text(self.data.max_expiry)
         if min_expiry_text == max_expiry_text:
@@ -247,7 +246,7 @@ class MiningUI:
         reward_label.grid(row=self.row_count, column=0, columnspan=self.settings.column_count, sticky=tk.W)
         self.row_count += 1
         
-    def display_warning(self, warning: str):
+    def display_row_warning(self, warning: str):
         label = tk.Label(self.frame, text=warning)
         label.config(foreground="orange")
         label.grid(column=0, columnspan=self.settings.column_count, row=self.row_count, sticky=tk.W)

@@ -30,8 +30,8 @@ def plugin_app(parent: tk.Frame) -> tk.Frame:
     
     main_ui.set_frame(parent)
 
-    if configuration.check_updates:
-        logger.info("Starting Update Check in new Thread...")
+    if configuration.version_check_enabled:
+        logger.info("Starting Version Check in new Thread...")
 
         def notify_main_ui_version_info(version_info: VersionInfo):
             main_ui.notify_version_info(version_info)

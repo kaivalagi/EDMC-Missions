@@ -107,13 +107,13 @@ class GridUiSettings:
     """
     def __init__(self, config: Configuration):
         self.column_count = 4
-        self.display_total = config.display_total
-        self.display_stats = config.display_stats
-        self.debug_mode = config.debug_mode
+        self.display_row_total = config.display_row_total
+        self.display_row_stats = config.display_row_stats
+        self.debug_mode_enabled = config.debug_mode_enabled
 
 class MassacreUI:
     def __init__(self):
-        self.tabstrip: Optional[tk.Notebook] = None
+        self.tabstrip: Optional[ttk.Notebook] = None
         self.frame: Optional[tk.Frame] = None
         self.data: Optional[MassacreMissionData] = None
         self.settings: GridUiSettings = GridUiSettings(configuration)
@@ -169,16 +169,16 @@ class MassacreUI:
         self.tabstrip.tab(self.frame, text=f"Massacre [{self.data.mission_count}]")
         self.display_header()
         for faction in sorted(self.data.factions.keys()):
-            self.display_row(faction)
+            self.display_row_data(faction)
 
-        if self.settings.display_total:
-            self.display_total()
+        if self.settings.display_row_total:
+            self.display_row_total()
 
-        if self.settings.display_stats:
-            self.display_stats()
+        if self.settings.display_row_stats:
+            self.display_row_stats()
 
         for warning in self.data.warnings:
-            self.display_warning(warning)
+            self.display_row_warning(warning)
     
     def display_header(self):
 
@@ -199,7 +199,7 @@ class MassacreUI:
         
         self.settings.column_count = len(ui_elements)
 
-    def display_row(self, faction: str):      
+    def display_row_data(self, faction: str):      
         
         faction_data = self.data.factions[faction]
         
@@ -223,7 +223,7 @@ class MassacreUI:
         # lines = [f"commodity:{commodity},count:{self.data.delivered_count}/{self.data.required_count}"]
         # overlay.send_lines("mining", lines)
         
-    def display_total(self):
+    def display_row_total(self):
         label = tk.Label(self.frame, text="Total")
         kill_total = tk.Label(self.frame, text=self.data.kill_count)
         mission_total = tk.Label(self.frame, text=self.data.mission_count)
@@ -244,7 +244,7 @@ class MassacreUI:
         pb["value"] = (float(self.data.victim_count)/float(self.data.kill_count))*100    
         self.row_count += 1
         
-    def display_stats(self):
+    def display_row_stats(self):
         min_expiry_text = get_expiry_text(self.data.min_expiry)
         max_expiry_text = get_expiry_text(self.data.max_expiry)
         if min_expiry_text == max_expiry_text:
@@ -262,7 +262,7 @@ class MassacreUI:
         reward_label.grid(row=self.row_count, column=0, columnspan=self.settings.column_count, sticky=tk.W)
         self.row_count += 1        
         
-    def display_warning(self, warning: str):
+    def display_row_warning(self, warning: str):
         label = tk.Label(self.frame, text=warning)
         label.config(foreground="orange")
         label.grid(column=0, columnspan=self.settings.column_count, row=self.row_count, sticky=tk.W)
